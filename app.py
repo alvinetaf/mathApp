@@ -1,31 +1,18 @@
-import streamlit as st
-import pandas as pd
+from flask import Flask, request, jsonify
 import joblib
+import numpy as np
 
-# Charger le modèle
-model = joblib.load("model_mathE.pkl")
+app = Flask(__name__)
 
-# Interface utilisateur
-st.title(" Prédiction de Réponses en Mathématiques")
+# Charger le modèle pré-entraîné
+model = joblib.load('model_mathE.pkl')  # Remplacez par le chemin de votre modèle
 
-# Charger les données d'entrée
-uploaded_file = st.file_uploader(" Charger un fichier excel", type="excel")
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json(force=True)
+    input_data = np.array(data['input']).reshape(1, -1)  # Formater les données
+    prediction = model.predict(input_data)
+    return jsonify({'prediction': prediction.tolist()})
 
-if uploaded_file:
-    df_input = pd.read_excel(uploaded_file)
-
-    # Vérifier la structure des données
-    if "Type of Answer" in df_input.columns:
-        df_input = df_input.drop(columns=["Type of Answer"])  # Supprimer la cible si elle est présente
-
-    # Prédire
-    predictions = model.predict(df_input)
-
-    # Afficher les résultats
-    df_input["Prediction"] = predictions
-    st.write(" Résultats des Prédictions :")
-    st.dataframe(df_input)
-
-    # Télécharger le fichier avec les prédictions
-    df_input.to_excel("predictions.excel", index=False)
-    st.download_button(" Télécharger les Prédictions", "predictions.excel", "text/excel")
+if __name__ == '__main__':
+    app.run(debug=True)
