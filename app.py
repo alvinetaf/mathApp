@@ -27,5 +27,5 @@ if uploaded_file:
     st.dataframe(df_input)
 
     # Télécharger le fichier avec les prédictions
-    df_input.to_csv("predictions.csv", index=False)
-    st.download_button(" Télécharger les Prédictions", "predictions.csv", "text/csv")
+    df_input.to_excel("predictions.excel", index=False)
+    st.download_button(" Télécharger les Prédictions", "predictions.excel", "text/excel")
