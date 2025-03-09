@@ -1,18 +1,32 @@
-from flask import Flask, request, jsonify
+
+import streamlit as st
+import pandas as pd
 import joblib
-import numpy as np
 
-app = Flask(__name__)
+# 📌 Charger le modèle et le scaler
+model = joblib.load("knn_model.pkl")
+scaler = joblib.load("scaler.pkl")
 
-# Charger le modèle pré-entraîné
-model = joblib.load('model_mathE.pkl')  # Remplacez par le chemin de votre modèle
+st.title("🔮 Prédiction de Réponses MathE")
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.get_json(force=True)
-    input_data = np.array(data['input']).reshape(1, -1)  # Formater les données
-    prediction = model.predict(input_data)
-    return jsonify({'prediction': prediction.tolist()})
+# 📂 Upload du fichier utilisateur
+uploaded_file = st.file_uploader("📥 Charger un fichier CSV", type="csv")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if uploaded_file:
+    df_input = pd.read_csv(uploaded_file)
+
+    # Prétraitement des données
+    if "Type of Answer" in df_input.columns:
+        df_input = df_input.drop(columns=["Type of Answer"])
+    df_input_scaled = scaler.transform(df_input)
+
+    # 🔮 Prédictions
+    predictions = model.predict(df_input_scaled)
+
+    # 📊 Afficher les résultats
+    df_input["Prediction"] = predictions
+    st.dataframe(df_input)
+
+    # 📥 Télécharger les résultats
+    df_input.to_csv("predictions.csv", index=False)
+    st.download_button("📥 Télécharger les Prédictions", open("predictions.csv", "rb"), "predictions.csv", "text/csv")
